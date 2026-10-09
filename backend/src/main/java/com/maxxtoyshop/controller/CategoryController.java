@@ -1,0 +1,2 @@
+package com.maxxtoyshop.controller; import com.maxxtoyshop.model.Category; import com.maxxtoyshop.repository.CategoryRepository; import lombok.RequiredArgsConstructor; import org.springframework.web.bind.annotation.*; import java.util.*;
+@RestController @RequestMapping("/api/categories") @RequiredArgsConstructor public class CategoryController {private final CategoryRepository repo;@GetMapping public List<Category> all(){return repo.findAll();}}

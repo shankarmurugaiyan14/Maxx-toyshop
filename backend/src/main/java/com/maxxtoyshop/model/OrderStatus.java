@@ -1,0 +1,1 @@
+package com.maxxtoyshop.model; public enum OrderStatus { PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED }

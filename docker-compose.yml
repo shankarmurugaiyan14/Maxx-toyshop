@@ -1,0 +1,97 @@
+services:
+
+  # ==========================================
+  # DATABASE
+  # ==========================================
+  database:
+    build:
+      context: ./database
+
+    container_name: toystore-data
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: maxx_toy_shop
+
+    ports:
+      - "82:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    networks:
+      - toystore-network
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uroot",
+          "-proot"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # ==========================================
+  # BACKEND
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+
+    container_name: toystore-back
+
+    depends_on:
+      database:
+        condition: service_healthy
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/maxx_toy_shop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+
+    ports:
+      - "8080:8080"
+
+    networks:
+      - toystore-network
+
+
+  # ==========================================
+  # FRONTEND
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+
+    container_name: toystore-front
+
+    depends_on:
+      - backend
+
+    ports:
+      - "81:80"
+
+    networks:
+      - toystore-network
+
+
+# ==========================================
+# NETWORK
+# ==========================================
+networks:
+  toystore-network:
+    driver: bridge
+
+
+# ==========================================
+# DATABASE VOLUME
+# ==========================================
+volumes:
+  mysql_data:

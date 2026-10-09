@@ -1,0 +1,1 @@
+package com.maxxtoyshop.model; public enum Role { CUSTOMER, ADMIN }

@@ -1,0 +1,216 @@
+<header>
+  <div class="container nav">
+    <a class="logo" href="#" (click)="continueShopping(); $event.preventDefault()">
+      <span class="logo-mark">M</span>
+      <span>Maxx Toy Shop</span>
+    </a>
+
+    <div class="nav-actions">
+      <button class="cart-button" (click)="cartOpen = true" aria-label="Open shopping cart">
+        🛒 Cart
+        <span class="cart-badge" *ngIf="cartCount">{{ cartCount }}</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main *ngIf="!checkoutOpen">
+  <div class="container">
+    <section class="hero">
+      <div class="hero-content">
+        <div>
+          <div style="font-weight:900; letter-spacing:.08em; text-transform:uppercase;">Play • Learn • Imagine</div>
+          <h1>Big smiles start with great toys!</h1>
+          <p>Discover fun, colourful and creative toys for every little explorer at Maxx Toy Shop.</p>
+          <button class="primary" (click)="productsSection.scrollIntoView({behavior:'smooth'})">
+            Shop Toys ✨
+          </button>
+        </div>
+        <div class="hero-art" aria-hidden="true">🧸🚀</div>
+      </div>
+    </section>
+
+    <section #productsSection>
+      <div class="section-head">
+        <div>
+          <h2>Our Toy Collection</h2>
+          <p>10 exciting products ready for your store.</p>
+        </div>
+      </div>
+
+      <div class="filters">
+        <button
+          class="filter"
+          *ngFor="let category of categories"
+          [class.active]="selectedCategory === category"
+          (click)="selectedCategory = category">
+          {{ category }}
+        </button>
+      </div>
+
+      <div class="grid">
+        <article class="card" *ngFor="let product of filteredProducts">
+          <div class="product-image">
+            <span class="tag" *ngIf="product.tag">{{ product.tag }}</span>
+            <!-- Replace this emoji with your product image later -->
+            <img [src]="product.image" [alt]="product.name" class="toy-image">
+          </div>
+
+          <div class="card-body">
+            <div class="category">{{ product.category }}</div>
+            <h3>{{ product.name }}</h3>
+            <div class="price-row">
+              <span class="price">{{ money(product.price) }}</span>
+              <button class="add" (click)="addToCart(product)">+ Add</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Cart drawer -->
+<div class="overlay" *ngIf="cartOpen" (click)="cartOpen = false">
+  <aside class="drawer" (click)="$event.stopPropagation()">
+    <div class="drawer-head">
+      <h2>Your Cart 🛒</h2>
+      <button class="close" (click)="cartOpen = false">×</button>
+    </div>
+
+    <div class="empty" *ngIf="!cart.length">
+      <div class="emoji">🧸</div>
+      <h3>Your cart is waiting for toys!</h3>
+      <p>Add something fun from our collection.</p>
+    </div>
+
+    <div *ngIf="cart.length">
+      <div class="cart-item" *ngFor="let item of cart">
+        <div class="thumb"><img [src]="item.image" [alt]="item.name"></div>
+        <div>
+          <h4>{{ item.name }}</h4>
+          <small>{{ money(item.price) }} each</small>
+          <div class="qty">
+            <button (click)="changeQuantity(item, -1)">−</button>
+            <strong>{{ item.quantity }}</strong>
+            <button (click)="changeQuantity(item, 1)">+</button>
+            <button style="margin-left:6px; border:0; color:#ff4f87; background:transparent;" (click)="removeFromCart(item)">Remove</button>
+          </div>
+        </div>
+        <strong>{{ money(item.price * item.quantity) }}</strong>
+      </div>
+
+      <div class="total">
+        <div class="total-row"><span>Subtotal</span><strong>{{ money(subtotal) }}</strong></div>
+        <div class="total-row"><span>Delivery</span><strong>{{ delivery ? money(delivery) : 'FREE' }}</strong></div>
+        <div class="total-row grand"><span>Total</span><strong>{{ money(total) }}</strong></div>
+      </div>
+
+      <button class="checkout-btn" (click)="openCheckout()">Proceed to Checkout →</button>
+    </div>
+  </aside>
+</div>
+
+<!-- Checkout -->
+<main class="checkout-page" *ngIf="checkoutOpen">
+  <div class="container">
+    <button class="filter" (click)="continueShopping()">← Continue Shopping</button>
+
+    <div class="section-head">
+      <div>
+        <h2>Checkout</h2>
+        <p>Almost there! Enter your delivery details.</p>
+      </div>
+    </div>
+
+    <div class="checkout-layout" *ngIf="!orderPlaced">
+      <section class="panel">
+        <h2>Delivery Details 📦</h2>
+
+        <form class="form-grid" #checkoutForm="ngForm" (ngSubmit)="placeOrder()">
+          <div class="field">
+            <label>First Name</label>
+            <input name="firstName" [(ngModel)]="customer.firstName" required placeholder="Your first name">
+          </div>
+          <div class="field">
+            <label>Last Name</label>
+            <input name="lastName" [(ngModel)]="customer.lastName" required placeholder="Your last name">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" name="email" [(ngModel)]="customer.email" required placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input name="phone" [(ngModel)]="customer.phone" required placeholder="+91 98765 43210">
+          </div>
+          <div class="field full">
+            <label>Delivery Address</label>
+            <input name="address" [(ngModel)]="customer.address" required placeholder="House / Flat / Street">
+          </div>
+          <div class="field">
+            <label>City</label>
+            <input name="city" [(ngModel)]="customer.city" required placeholder="Coimbatore">
+          </div>
+          <div class="field">
+            <label>State</label>
+            <input name="state" [(ngModel)]="customer.state" required placeholder="Tamil Nadu">
+          </div>
+          <div class="field">
+            <label>Pincode</label>
+            <input name="pincode" [(ngModel)]="customer.pincode" required placeholder="641001">
+          </div>
+          <div class="field">
+            <label>Payment</label>
+            <select name="payment" [(ngModel)]="customer.payment">
+              <option value="COD">Cash on Delivery</option>
+              <option value="CARD">Card (Demo)</option>
+              <option value="UPI">UPI (Demo)</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <button class="checkout-btn" type="submit" [disabled]="checkoutForm.invalid">
+              Place Order • {{ money(total) }}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="panel">
+        <h2>Order Summary</h2>
+        <div class="cart-item" *ngFor="let item of cart">
+          <div class="thumb"><img [src]="item.image" [alt]="item.name"></div>
+          <div>
+            <h4>{{ item.name }}</h4>
+            <small>Qty: {{ item.quantity }}</small>
+          </div>
+          <strong>{{ money(item.price * item.quantity) }}</strong>
+        </div>
+        <div class="total">
+          <div class="total-row"><span>Subtotal</span><strong>{{ money(subtotal) }}</strong></div>
+          <div class="total-row"><span>Delivery</span><strong>{{ delivery ? money(delivery) : 'FREE' }}</strong></div>
+          <div class="total-row grand"><span>Total</span><strong>{{ money(total) }}</strong></div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel success" *ngIf="orderPlaced">
+      <div class="icon">🎉</div>
+      <h2>Order Placed Successfully!</h2>
+      <p>Thank you for shopping with Maxx Toy Shop.</p>
+      <p>Your demo order has been received. Backend order processing will be connected later.</p>
+      <button class="primary" (click)="continueShopping()">Back to Shop</button>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div>
+      <div class="logo"><span class="logo-mark">M</span><span>Maxx Toy Shop</span></div>
+      <p>Making playtime more colourful.</p>
+    </div>
+    <div>© 2026 Maxx Toy Shop</div>
+  </div>
+</footer>

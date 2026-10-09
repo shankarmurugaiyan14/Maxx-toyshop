@@ -1,0 +1,2 @@
+package com.maxxtoyshop.repository; import com.maxxtoyshop.model.Category; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*;
+public interface CategoryRepository extends JpaRepository<Category,Long>{Optional<Category> findByNameIgnoreCase(String name);}

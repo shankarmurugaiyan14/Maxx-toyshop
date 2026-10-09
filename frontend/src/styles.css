@@ -1,0 +1,1263 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+
+
+/* =========================================
+   GLOBAL
+========================================= */
+
+:root {
+  --purple: #6c3cff;
+  --purple-dark: #4d25c7;
+  --pink: #ff4f87;
+  --yellow: #ffd447;
+  --cyan: #35d6d0;
+
+  --ink: #20203a;
+  --muted: #74748c;
+
+  --surface: #ffffff;
+  --bg: #f8f7ff;
+
+  --border: #ebe8f5;
+
+  --shadow:
+    0 16px 45px rgba(47, 32, 100, .10);
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+
+html {
+  scroll-behavior: smooth;
+}
+
+
+body {
+  margin: 0;
+
+  background: var(--bg);
+
+  color: var(--ink);
+
+  font-family: 'Nunito', sans-serif;
+}
+
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+
+button {
+  cursor: pointer;
+}
+
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+
+.container {
+  width: min(1180px, calc(100% - 36px));
+
+  margin: 0 auto;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+header {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 20;
+
+  background: rgba(255,255,255,.94);
+
+  backdrop-filter: blur(16px);
+
+  border-bottom:
+    1px solid rgba(235,232,245,.8);
+}
+
+
+.nav {
+  height: 76px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+.logo {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  font-family: 'Baloo 2', cursive;
+
+  font-size: 28px;
+
+  font-weight: 800;
+}
+
+
+.logo-mark {
+  width: 42px;
+
+  height: 42px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 13px;
+
+  color: #fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--purple),
+      var(--pink)
+    );
+
+  transform: rotate(-5deg);
+
+  box-shadow:
+    0 8px 18px rgba(108,60,255,.25);
+}
+
+
+.nav-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+
+.cart-button {
+  position: relative;
+
+  border: 0;
+
+  color: white;
+
+  background: var(--ink);
+
+  padding: 12px 18px;
+
+  border-radius: 14px;
+
+  font-weight: 800;
+}
+
+
+.cart-badge {
+  position: absolute;
+
+  top: -8px;
+
+  right: -7px;
+
+  min-width: 22px;
+
+  height: 22px;
+
+  padding: 0 6px;
+
+  border-radius: 99px;
+
+  display: grid;
+
+  place-items: center;
+
+  color: #fff;
+
+  background: var(--pink);
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   HERO
+========================================= */
+
+.hero {
+  margin-top: 28px;
+
+  border-radius: 30px;
+
+  overflow: hidden;
+
+  position: relative;
+
+  background:
+    linear-gradient(
+      120deg,
+      #6c3cff 0%,
+      #8e55ff 52%,
+      #ff4f87 100%
+    );
+
+  color: #fff;
+
+  box-shadow: var(--shadow);
+}
+
+
+.hero::before,
+.hero::after {
+  content: '';
+
+  position: absolute;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.11);
+}
+
+
+.hero::before {
+  width: 310px;
+
+  height: 310px;
+
+  right: -70px;
+
+  top: -150px;
+}
+
+
+.hero::after {
+  width: 210px;
+
+  height: 210px;
+
+  left: 44%;
+
+  bottom: -150px;
+}
+
+
+.hero-content {
+  position: relative;
+
+  z-index: 1;
+
+  padding: 54px 56px;
+
+  display: grid;
+
+  grid-template-columns: 1.2fr .8fr;
+
+  gap: 30px;
+
+  align-items: center;
+}
+
+
+.hero-small-title {
+  font-weight: 900;
+
+  letter-spacing: .08em;
+
+  text-transform: uppercase;
+}
+
+
+.hero h1 {
+  font-family: 'Baloo 2', cursive;
+
+  font-size:
+    clamp(42px, 6vw, 72px);
+
+  line-height: .92;
+
+  margin: 0 0 18px;
+}
+
+
+.hero p {
+  font-size: 18px;
+
+  max-width: 570px;
+
+  opacity: .92;
+}
+
+
+.hero-art {
+  min-height: 230px;
+
+  display: grid;
+
+  place-items: center;
+
+  font-size: 130px;
+
+  filter:
+    drop-shadow(
+      0 22px 20px rgba(40,0,80,.2)
+    );
+}
+
+
+.primary {
+  border: 0;
+
+  padding: 14px 22px;
+
+  border-radius: 14px;
+
+  background: var(--yellow);
+
+  color: #3d2d00;
+
+  font-weight: 900;
+
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.12);
+}
+
+
+.primary:hover {
+  transform: translateY(-1px);
+}
+
+
+/* =========================================
+   SECTION HEADER
+========================================= */
+
+.section-head {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: end;
+
+  gap: 16px;
+
+  margin: 42px 0 18px;
+}
+
+
+.section-head h2 {
+  font-family: 'Baloo 2';
+
+  font-size: 34px;
+
+  margin: 0;
+}
+
+
+.section-head p {
+  color: var(--muted);
+
+  margin: 0;
+}
+
+
+/* =========================================
+   FILTERS
+========================================= */
+
+.filters {
+  display: flex;
+
+  gap: 10px;
+
+  flex-wrap: wrap;
+
+  margin-bottom: 22px;
+}
+
+
+.filter {
+  border: 1px solid var(--border);
+
+  background: white;
+
+  color: var(--muted);
+
+  padding: 9px 15px;
+
+  border-radius: 99px;
+
+  font-weight: 800;
+}
+
+
+.filter.active {
+  color: white;
+
+  background: var(--purple);
+
+  border-color: var(--purple);
+}
+
+
+/* =========================================
+   PRODUCT GRID
+========================================= */
+
+.grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 20px;
+}
+
+
+/* =========================================
+   PRODUCT CARD
+========================================= */
+
+.card {
+  background: white;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 22px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 8px 25px rgba(50,35,90,.05);
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+
+  display: flex;
+
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+
+.card:hover {
+  transform: translateY(-5px);
+
+  box-shadow: var(--shadow);
+}
+
+
+/* =========================================
+   CONSISTENT IMAGE AREA
+========================================= */
+
+.product-image {
+
+  /* THIS MAKES ALL IMAGES SAME HEIGHT */
+
+  height: 230px;
+
+  width: 100%;
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f0edff,
+      #fff1f7
+    );
+}
+
+
+/*
+   The actual product image.
+
+   object-fit: contain means:
+   - full toy remains visible
+   - image doesn't get stretched
+   - image doesn't get cropped
+*/
+.toy-image {
+
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: contain;
+
+  padding: 14px;
+
+  display: block;
+}
+
+
+/* =========================================
+   PRODUCT TAG
+========================================= */
+
+.tag {
+
+  position: absolute;
+
+  left: 12px;
+
+  top: 12px;
+
+  z-index: 2;
+
+  background: var(--yellow);
+
+  color: #3d2d00;
+
+  padding: 5px 9px;
+
+  border-radius: 8px;
+
+  font-size: 11px;
+
+  font-weight: 900;
+}
+
+
+/* =========================================
+   PRODUCT BODY
+========================================= */
+
+.card-body {
+
+  padding: 16px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  flex: 1;
+}
+
+
+/* PRODUCT CATEGORY */
+
+.category {
+
+  color: var(--purple);
+
+  font-size: 12px;
+
+  font-weight: 900;
+
+  text-transform: uppercase;
+
+  margin-bottom: 5px;
+}
+
+
+/* PRODUCT NAME */
+
+.product-name {
+
+  margin: 0;
+
+  color: var(--ink);
+
+  font-size: 18px;
+
+  font-weight: 800;
+
+  line-height: 1.25;
+
+  /*
+     Every product gets the same
+     name area height.
+  */
+
+  min-height: 46px;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  overflow: hidden;
+}
+
+
+/* =========================================
+   PRICE
+========================================= */
+
+.price-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-top: auto;
+
+  padding-top: 12px;
+}
+
+
+.price {
+
+  font-size: 21px;
+
+  font-weight: 900;
+
+  color: var(--ink);
+}
+
+
+/* =========================================
+   ADD BUTTON
+========================================= */
+
+.add {
+
+  border: 0;
+
+  background: var(--ink);
+
+  color: white;
+
+  border-radius: 11px;
+
+  padding: 10px 13px;
+
+  font-weight: 800;
+}
+
+
+.add:hover {
+  background: var(--purple);
+}
+
+
+/* =========================================
+   CART OVERLAY
+========================================= */
+
+.overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 50;
+
+  background:
+    rgba(24,18,45,.5);
+
+  display: flex;
+
+  justify-content: flex-end;
+}
+
+
+.drawer {
+
+  width:
+    min(480px, 100%);
+
+  height: 100%;
+
+  background: white;
+
+  padding: 26px;
+
+  overflow: auto;
+
+  box-shadow:
+    -15px 0 50px rgba(0,0,0,.15);
+}
+
+
+.drawer-head {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+}
+
+
+.drawer h2 {
+
+  font-family: 'Baloo 2';
+
+  font-size: 32px;
+
+  margin: 0;
+}
+
+
+.close {
+
+  border: 0;
+
+  background: #f2effb;
+
+  width: 40px;
+
+  height: 40px;
+
+  border-radius: 12px;
+
+  font-size: 22px;
+}
+
+
+/* =========================================
+   CART ITEMS
+========================================= */
+
+.cart-item {
+
+  display: grid;
+
+  grid-template-columns:
+    62px 1fr auto;
+
+  gap: 12px;
+
+  align-items: center;
+
+  padding: 16px 0;
+
+  border-bottom:
+    1px solid var(--border);
+}
+
+
+/* CART IMAGE */
+
+.thumb {
+
+  width: 62px;
+
+  height: 62px;
+
+  border-radius: 15px;
+
+  display: grid;
+
+  place-items: center;
+
+  background: #f3f0ff;
+
+  overflow: hidden;
+}
+
+
+.thumb img {
+
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: contain;
+
+  padding: 5px;
+
+  display: block;
+}
+
+
+.cart-item h4 {
+
+  margin: 0 0 4px;
+}
+
+
+.cart-item small {
+
+  color: var(--muted);
+}
+
+
+/* =========================================
+   QUANTITY
+========================================= */
+
+.qty {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-top: 8px;
+}
+
+
+.qty button {
+
+  width: 26px;
+
+  height: 26px;
+
+  border:
+    1px solid var(--border);
+
+  background: white;
+
+  border-radius: 7px;
+}
+
+
+.remove-button {
+
+  width: auto !important;
+
+  border: 0 !important;
+
+  color: var(--pink);
+
+  background: transparent !important;
+
+  margin-left: 6px;
+}
+
+
+/* =========================================
+   EMPTY CART
+========================================= */
+
+.empty {
+
+  text-align: center;
+
+  color: var(--muted);
+
+  padding: 70px 20px;
+}
+
+
+.empty .emoji {
+
+  font-size: 60px;
+}
+
+
+/* =========================================
+   TOTAL
+========================================= */
+
+.total {
+
+  margin-top: 22px;
+
+  padding: 18px;
+
+  border-radius: 18px;
+
+  background: #f7f5ff;
+}
+
+
+.total-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  margin: 8px 0;
+}
+
+
+.total-row.grand {
+
+  font-size: 21px;
+
+  font-weight: 900;
+
+  padding-top: 10px;
+
+  border-top:
+    1px solid var(--border);
+}
+
+
+/* =========================================
+   CHECKOUT BUTTON
+========================================= */
+
+.checkout-btn {
+
+  width: 100%;
+
+  margin-top: 14px;
+
+  border: 0;
+
+  padding: 15px;
+
+  border-radius: 14px;
+
+  color: white;
+
+  background: var(--purple);
+
+  font-weight: 900;
+}
+
+
+.checkout-btn:hover {
+
+  background: var(--purple-dark);
+}
+
+
+.checkout-btn:disabled {
+
+  opacity: .5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================
+   CHECKOUT PAGE
+========================================= */
+
+.checkout-page {
+
+  padding: 45px 0 80px;
+}
+
+
+.checkout-layout {
+
+  display: grid;
+
+  grid-template-columns:
+    1.25fr .75fr;
+
+  gap: 28px;
+}
+
+
+.panel {
+
+  background: white;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 22px;
+
+  padding: 25px;
+
+  box-shadow:
+    0 8px 25px rgba(50,35,90,.05);
+}
+
+
+.panel h2 {
+
+  font-family: 'Baloo 2';
+
+  font-size: 28px;
+
+  margin-top: 0;
+}
+
+
+/* =========================================
+   CHECKOUT FORM
+========================================= */
+
+.form-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 15px;
+}
+
+
+.field {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.field.full {
+
+  grid-column: 1 / -1;
+}
+
+
+.field label {
+
+  font-size: 13px;
+
+  font-weight: 900;
+}
+
+
+.field input,
+.field select {
+
+  width: 100%;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 12px;
+
+  padding: 12px 13px;
+
+  outline: none;
+
+  background: #fcfbff;
+}
+
+
+.field input:focus,
+.field select:focus {
+
+  border-color: var(--purple);
+
+  box-shadow:
+    0 0 0 3px rgba(108,60,255,.1);
+}
+
+
+/* =========================================
+   SUCCESS
+========================================= */
+
+.success {
+
+  text-align: center;
+
+  padding: 60px 25px;
+}
+
+
+.success .icon {
+
+  font-size: 75px;
+}
+
+
+.success h2 {
+
+  margin-bottom: 8px;
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+footer {
+
+  margin-top: 70px;
+
+  padding: 35px 0;
+
+  background: var(--ink);
+
+  color: #fff;
+}
+
+
+.footer-inner {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+footer p {
+
+  opacity: .65;
+}
+
+
+/* =========================================
+   RESPONSIVE - TABLET
+========================================= */
+
+@media (max-width: 900px) {
+
+  .grid {
+
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+
+  .hero-content,
+  .checkout-layout {
+
+    grid-template-columns: 1fr;
+  }
+
+
+  .hero-art {
+
+    min-height: 100px;
+
+    font-size: 80px;
+  }
+}
+
+
+/* =========================================
+   RESPONSIVE - MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+
+  .container {
+
+    width:
+      min(100% - 24px, 1180px);
+  }
+
+
+  .nav {
+
+    height: 68px;
+  }
+
+
+  .logo {
+
+    font-size: 24px;
+  }
+
+
+  .logo-mark {
+
+    width: 36px;
+
+    height: 36px;
+  }
+
+
+  .hero-content {
+
+    padding: 38px 25px;
+  }
+
+
+  .grid {
+
+    grid-template-columns:
+      repeat(2, 1fr);
+
+    gap: 12px;
+  }
+
+
+  /*
+     Smaller but still consistent
+     image area on mobile.
+  */
+
+  .product-image {
+
+    height: 170px;
+  }
+
+
+  .toy-image {
+
+    padding: 8px;
+  }
+
+
+  .card-body {
+
+    padding: 12px;
+  }
+
+
+  .category {
+
+    font-size: 10px;
+  }
+
+
+  .product-name {
+
+    font-size: 15px;
+
+    min-height: 38px;
+  }
+
+
+  .price-row {
+
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+
+  .add {
+
+    width: 100%;
+  }
+
+
+  .form-grid {
+
+    grid-template-columns: 1fr;
+  }
+
+
+  .field.full {
+
+    grid-column: auto;
+  }
+
+}
