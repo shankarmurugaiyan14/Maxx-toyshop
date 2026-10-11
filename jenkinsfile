@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_USERNAME = 'yourusername'
+        DOCKERHUB_USERNAME = 'shankarmurugaiyan'
         IMAGE_TAG = "build-${BUILD_NUMBER}"
     }
 
