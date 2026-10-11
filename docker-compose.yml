@@ -37,7 +37,7 @@ services:
 
 
   backend:
-    image: yourusername/maxx-toystore-backend:${IMAGE_TAG:-latest}
+    image: shankarmurugaiyan/maxx-toystore-backend:${IMAGE_TAG:-latest}
     build:
       context: ./backend
 
