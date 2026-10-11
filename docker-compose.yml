@@ -1,9 +1,7 @@
 services:
 
-  # ==========================================
-  # DATABASE
-  # ==========================================
   database:
+    image: yourusername/maxx-toystore-database:${IMAGE_TAG:-latest}
     build:
       context: ./database
 
@@ -38,10 +36,8 @@ services:
       retries: 10
 
 
-  # ==========================================
-  # BACKEND
-  # ==========================================
   backend:
+    image: yourusername/maxx-toystore-backend:${IMAGE_TAG:-latest}
     build:
       context: ./backend
 
@@ -63,10 +59,8 @@ services:
       - toystore-network
 
 
-  # ==========================================
-  # FRONTEND
-  # ==========================================
   frontend:
+    image: shankarmurugaiyan/maxx-toystore-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
 
@@ -82,16 +76,10 @@ services:
       - toystore-network
 
 
-# ==========================================
-# NETWORK
-# ==========================================
 networks:
   toystore-network:
     driver: bridge
 
 
-# ==========================================
-# DATABASE VOLUME
-# ==========================================
 volumes:
   mysql_data:
