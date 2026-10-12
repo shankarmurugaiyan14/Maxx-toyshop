@@ -1,4 +1,4 @@
-
+```groovy
 pipeline {
     agent any
 
@@ -43,8 +43,9 @@ pipeline {
                     powershell '''
                         $ErrorActionPreference = "Stop"
 
-                        $env:DH_TOKEN |
-                            docker login --username $env:DH_USER --password-DH_TOKEN
+                        $env:DH_TOKEN | docker login `
+                            --username $env:DH_USER `
+                            --password-stdin
 
                         if ($LASTEXITCODE -ne 0) {
                             exit $LASTEXITCODE
@@ -79,3 +80,4 @@ pipeline {
         }
     }
 }
+```
