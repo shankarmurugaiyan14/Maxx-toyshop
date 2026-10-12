@@ -1,3 +1,4 @@
+```groovy
 pipeline {
     agent any
 
@@ -6,7 +7,6 @@ pipeline {
     }
 
     environment {
-        IMAGE_TAG = 'latest'
         COMPOSE_FILE = 'docker-compose.yml'
     }
 
@@ -34,7 +34,7 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-cred',
+                        credentialsId: 'dockerhub-creds',
                         usernameVariable: 'DH_USER',
                         passwordVariable: 'DH_TOKEN'
                     )
@@ -42,13 +42,60 @@ pipeline {
                     powershell '''
                         $ErrorActionPreference = "Stop"
 
-                        $env:DH_TOKEN | docker login `
-                            --username $env:DH_USER `
-                            --password-stdin
-
-                        if ($LASTEXITCODE -ne 0) {
-                            exit $LASTEXITCODE
+                        if ([string]::IsNullOrWhiteSpace($env:DH_USER)) {
+                            throw "Docker Hub username is empty"
                         }
+
+                        if ([string]::IsNullOrWhiteSpace($env:DH_TOKEN)) {
+                            throw "Docker Hub token is empty"
+                        }
+
+                        $token = $env:DH_TOKEN.Trim()
+
+                        $docker = (Get-Command docker.exe -ErrorAction Stop).Source
+
+                        $psi = New-Object System.Diagnostics.ProcessStartInfo
+                        $psi.FileName = $docker
+                        $psi.Arguments = "login --username `"$env:DH_USER`" --password-stdin"
+                        $psi.UseShellExecute = $false
+                        $psi.RedirectStandardInput = $true
+                        $psi.RedirectStandardOutput = $true
+                        $psi.RedirectStandardError = $true
+                        $psi.CreateNoWindow = $true
+
+                        $process = New-Object System.Diagnostics.Process
+                        $process.StartInfo = $psi
+
+                        [void]$process.Start()
+
+                        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+                        $stderrTask = $process.StandardError.ReadToEndAsync()
+
+                        $process.StandardInput.WriteLine($token)
+                        $process.StandardInput.Close()
+
+                        $process.WaitForExit()
+
+                        $stdout = $stdoutTask.Result
+                        $stderr = $stderrTask.Result
+
+                        if ($stdout) {
+                            Write-Host $stdout
+                        }
+
+                        if ($process.ExitCode -ne 0) {
+                            Write-Host "Docker Hub login failed. Verify the Jenkins credential and access token."
+                            if ($stderr) {
+                                Write-Host $stderr
+                            }
+                            exit $process.ExitCode
+                        }
+
+                        if ($stderr) {
+                            Write-Host $stderr
+                        }
+
+                        Write-Host "Docker Hub login successful."
                     '''
 
                     bat 'docker compose -f "%COMPOSE_FILE%" push'
@@ -75,7 +122,8 @@ pipeline {
         }
 
         failure {
-            echo 'Pipeline failed. Check the Console Output.'
+            echo 'Pipeline failed. Check the first error in Console Output.'
         }
     }
 }
+```
