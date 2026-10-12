@@ -1,52 +1,29 @@
-pipeline {
 
+pipeline {
     agent any
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
-
     environment {
-        DOCKERHUB_USERNAME = 'shankarmurugaiyan'
-        IMAGE_TAG = "build-${BUILD_NUMBER}"
+        DOCKERHUB_USER = 'shankarmurugaiyan'
+        IMAGE_TAG = 'latest'
+        COMPOSE_FILE = 'docker-compose.yml'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                echo 'Checking out Maxx Toy Shop source code'
                 checkout scm
-            }
-        }
-
-        stage('Check Docker') {
-            steps {
-                echo 'Checking Docker installation'
-
-                sh 'docker --version'
-                sh 'docker compose version'
-            }
-        }
-
-        stage('Validate Compose') {
-            steps {
-                echo 'Validating Docker Compose configuration'
-
-                sh 'docker compose config -q'
             }
         }
 
         stage('Build Images') {
             steps {
-                echo "Building images with tag: ${IMAGE_TAG}"
-
-                sh 'docker compose build'
+                sh '''
+                    docker compose -f "$COMPOSE_FILE" build
+                '''
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Docker Hub Login') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -58,84 +35,43 @@ pipeline {
                     sh '''
                         set +x
                         echo "$DH_TOKEN" | docker login \
-                          --username "$DH_USER" \
-                          --password-stdin
+                            --username "$DH_USER" \
+                            --password-stdin
                     '''
                 }
             }
         }
 
-        stage('Tag Images') {
-            steps {
-                echo 'Tagging images for Docker Hub'
-
-                sh '''
-                    docker tag \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-frontend:latest" \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-frontend:$IMAGE_TAG"
-
-                    docker tag \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-backend:latest" \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-backend:$IMAGE_TAG"
-
-                    docker tag \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-database:latest" \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-database:$IMAGE_TAG"
-                '''
-            }
-        }
-
         stage('Push Images') {
             steps {
-                echo 'Pushing images to Docker Hub'
-
                 sh '''
-                    docker push \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-frontend:$IMAGE_TAG"
-
-                    docker push \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-backend:$IMAGE_TAG"
-
-                    docker push \
-                      "$DOCKERHUB_USERNAME/maxx-toystore-database:$IMAGE_TAG"
+                    docker compose -f "$COMPOSE_FILE" push
                 '''
             }
         }
 
-        stage('Deploy Application') {
+        stage('Deploy Containers') {
             steps {
-                echo 'Deploying Maxx Toy Shop using Docker Compose'
-
                 sh '''
-                    export IMAGE_TAG="$IMAGE_TAG"
-                    docker compose up -d --no-build
+                    docker compose -f "$COMPOSE_FILE" pull
+                    docker compose -f "$COMPOSE_FILE" up -d
+                    docker compose -f "$COMPOSE_FILE" ps
                 '''
-            }
-        }
-
-        stage('Verify Containers') {
-            steps {
-                echo 'Checking container status'
-
-                sh 'docker compose ps'
             }
         }
     }
 
     post {
+        always {
+            sh 'docker logout || true'
+        }
+
         success {
-            echo 'SUCCESS: Images pushed and application deployed.'
-            echo "Published image tag: ${IMAGE_TAG}"
+            echo 'Toy Store deployment completed!'
         }
 
         failure {
-            echo 'FAILURE: Check Jenkins Console Output.'
-        }
-
-        always {
-            sh '''
-                docker logout || true
-            '''
+            echo 'Pipeline failed. Check Console Output.'
         }
     }
 }
