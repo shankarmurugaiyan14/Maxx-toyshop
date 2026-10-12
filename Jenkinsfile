@@ -33,70 +33,28 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-creds',
+                        credentialsId: 'dockerhub-cred',
                         usernameVariable: 'DH_USER',
                         passwordVariable: 'DH_TOKEN'
                     )
                 ]) {
-                    powershell '''
-                        $ErrorActionPreference = "Stop"
-
-                        if ([string]::IsNullOrWhiteSpace($env:DH_USER)) {
+                    // Changed to double quotes (""") so Jenkins environment variables inject properly
+                    powershell """
+                        \$ErrorActionPreference = "Stop"
+                        
+                        # Validate credentials have been successfully loaded by Jenkins
+                        if ([string]::IsNullOrWhiteSpace("${env.DH_USER}")) {
                             throw "Docker Hub username is empty"
                         }
-
-                        if ([string]::IsNullOrWhiteSpace($env:DH_TOKEN)) {
+                        if ([string]::IsNullOrWhiteSpace("${env.DH_TOKEN}")) {
                             throw "Docker Hub token is empty"
                         }
 
-                        $token = $env:DH_TOKEN.Trim()
-
-                        $docker = (Get-Command docker.exe -ErrorAction Stop).Source
-
-                        $psi = New-Object System.Diagnostics.ProcessStartInfo
-                        $psi.FileName = $docker
-                        $psi.Arguments = "login --username `"$env:DH_USER`" --password-stdin"
-                        $psi.UseShellExecute = $false
-                        $psi.RedirectStandardInput = $true
-                        $psi.RedirectStandardOutput = $true
-                        $psi.RedirectStandardError = $true
-                        $psi.CreateNoWindow = $true
-
-                        $process = New-Object System.Diagnostics.Process
-                        $process.StartInfo = $psi
-
-                        [void]$process.Start()
-
-                        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-                        $stderrTask = $process.StandardError.ReadToEndAsync()
-
-                        $process.StandardInput.WriteLine($token)
-                        $process.StandardInput.Close()
-
-                        $process.WaitForExit()
-
-                        $stdout = $stdoutTask.Result
-                        $stderr = $stderrTask.Result
-
-                        if ($stdout) {
-                            Write-Host $stdout
-                        }
-
-                        if ($process.ExitCode -ne 0) {
-                            Write-Host "Docker Hub login failed. Verify the Jenkins credential and access token."
-                            if ($stderr) {
-                                Write-Host $stderr
-                            }
-                            exit $process.ExitCode
-                        }
-
-                        if ($stderr) {
-                            Write-Host $stderr
-                        }
-
-                        Write-Host "Docker Hub login successful."
-                    '''
-
+                        # Securely pipe the token to stdin using a clean Windows-native method
+                        "${env.DH_TOKEN}" | docker login --username "${env.DH_USER}" --password-stdin
+                    """
+                    
+                    // Push the newly built images using the existing compose configuration
                     bat 'docker compose -f "%COMPOSE_FILE%" push'
                 }
             }
