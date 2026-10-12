@@ -2,8 +2,11 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
-        DOCKERHUB_USER = 'shankarmurugaiyan'
         IMAGE_TAG = 'latest'
         COMPOSE_FILE = 'docker-compose.yml'
     }
@@ -15,15 +18,20 @@ pipeline {
             }
         }
 
-        stage('Build Images') {
+        stage('Check Docker') {
             steps {
-                sh '''
-                    docker compose -f "$COMPOSE_FILE" build
-                '''
+                bat 'docker --version'
+                bat 'docker compose version'
             }
         }
 
-        stage('Docker Hub Login') {
+        stage('Build Images') {
+            steps {
+                bat 'docker compose -f "%COMPOSE_FILE%" build'
+            }
+        }
+
+        stage('Docker Hub Login and Push') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -32,46 +40,42 @@ pipeline {
                         passwordVariable: 'DH_TOKEN'
                     )
                 ]) {
-                    sh '''
-                        set +x
-                        echo "$DH_TOKEN" | docker login \
-                            --username "$DH_USER" \
-                            --password-stdin
-                    '''
-                }
-            }
-        }
+                    powershell '''
+                        $ErrorActionPreference = "Stop"
 
-        stage('Push Images') {
-            steps {
-                sh '''
-                    docker compose -f "$COMPOSE_FILE" push
-                '''
+                        $env:DH_TOKEN |
+                            docker login --username $env:DH_USER --password-stdin
+
+                        if ($LASTEXITCODE -ne 0) {
+                            exit $LASTEXITCODE
+                        }
+                    '''
+
+                    bat 'docker compose -f "%COMPOSE_FILE%" push'
+                }
             }
         }
 
         stage('Deploy Containers') {
             steps {
-                sh '''
-                    docker compose -f "$COMPOSE_FILE" pull
-                    docker compose -f "$COMPOSE_FILE" up -d
-                    docker compose -f "$COMPOSE_FILE" ps
-                '''
+                bat 'docker compose -f "%COMPOSE_FILE%" pull'
+                bat 'docker compose -f "%COMPOSE_FILE%" up -d'
+                bat 'docker compose -f "%COMPOSE_FILE%" ps'
             }
         }
     }
 
     post {
         always {
-            sh 'docker logout || true'
+            bat 'docker logout'
         }
 
         success {
-            echo 'Toy Store deployment completed!'
+            echo 'Toy Store deployment completed successfully!'
         }
 
         failure {
-            echo 'Pipeline failed. Check Console Output.'
+            echo 'Pipeline failed. Check the Console Output.'
         }
     }
 }
