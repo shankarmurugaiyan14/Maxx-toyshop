@@ -44,7 +44,7 @@ pipeline {
                         $ErrorActionPreference = "Stop"
 
                         $env:DH_TOKEN |
-                            docker login --username $env:DH_USER --password-stdin
+                            docker login --username $env:DH_USER --password-DH_TOKEN
 
                         if ($LASTEXITCODE -ne 0) {
                             exit $LASTEXITCODE
