@@ -1,5 +1,5 @@
 
-name: Docker Compose Test Pipeline
+name: Three Tier Application CI Pipeline
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  build-test-push:
     runs-on: ubuntu-latest
 
     env:
@@ -27,41 +27,39 @@ jobs:
           docker --version
           docker compose version
 
+      - name: Validate Docker Compose
+        run: docker compose config -q
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_SECRETS }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Validate Compose file
-        run: docker compose config -q
-
-      - name: Build Docker images
+      - name: Build all three Docker images
         run: docker compose build
 
-      - name: Push images to Docker Hub
-        run: docker compose push
-
-      - name: Start application
+      - name: Start three tier application
         run: docker compose up -d
 
-      - name: Wait for containers
-        run: sleep 20
-
-      - name: Check running containers
+      - name: Check container status
         run: |
           docker compose ps
           docker ps
 
-      - name: Test frontend response
+      - name: Test frontend
         run: |
-          curl --fail --retry 5 --retry-delay 3 \
+          curl --fail --retry 10 --retry-delay 5 \
+            --retry-connrefused \
             http://localhost:81/
 
-      - name: Show logs if pipeline fails
+      - name: Push images to Docker Hub
+        run: docker compose push
+
+      - name: Display logs on failure
         if: failure()
         run: docker compose logs --no-color
 
-      - name: Stop application and clean up
+      - name: Stop application and cleanup
         if: always()
         run: docker compose down --remove-orphans
