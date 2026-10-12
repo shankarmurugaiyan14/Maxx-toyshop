@@ -1,7 +1,7 @@
 services:
 
   database:
-    image: ${DOCKERHUB_USERNAME}/maxx-toystore-database:${IMAGE_TAG:-latest}
+    image: shankarmurugaiyan/maxx-toystore-database:${IMAGE_TAG:-latest}
     build:
       context: ./database
 
@@ -37,7 +37,7 @@ services:
 
 
   backend:
-    image: ${DOCKERHUB_USERNAME}/maxx-toystore-backend:${IMAGE_TAG:-latest}
+    image: shankarmurugaiyan/maxx-toystore-backend:${IMAGE_TAG:-latest}
     build:
       context: ./backend
 
@@ -60,7 +60,7 @@ services:
 
 
   frontend:
-    image: ${DOCKERHUB_USERNAME}/maxx-toystore-frontend:${IMAGE_TAG:-latest}
+    image: shankarmurugaiyan/maxx-toystore-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
 
