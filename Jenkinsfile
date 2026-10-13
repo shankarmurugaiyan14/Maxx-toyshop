@@ -31,31 +31,15 @@ pipeline {
 
         stage('Docker Hub Login and Push') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-cred',
-                        usernameVariable: 'DH_USER',
-                        passwordVariable: 'DH_TOKEN'
-                    )
-                ]) {
-                    // Changed to double quotes (""") so Jenkins environment variables inject properly
-                    powershell """
-                        \$ErrorActionPreference = "Stop"
-                        
-                        # Validate credentials have been successfully loaded by Jenkins
-                        if ([string]::IsNullOrWhiteSpace("${env.DH_USER}")) {
-                            throw "Docker Hub username is empty"
-                        }
-                        if ([string]::IsNullOrWhiteSpace("${env.DH_TOKEN}")) {
-                            throw "Docker Hub token is empty"
-                        }
-
-                        # Securely pipe the token to stdin using a clean Windows-native method
-                        "${env.DH_TOKEN}" | docker login --username "${env.DH_USER}" --password-stdin
-                    """
-                    
-                    // Push the newly built images using the existing compose configuration
-                    bat 'docker compose -f "%COMPOSE_FILE%" push'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-cred', 
+                    usernameVariable: 'DH_USER', 
+                    passwordVariable: 'DH_TOKEN'
+                )]) {
+                    bat '''
+                        echo %DH_TOKEN% | docker login -u %DH_USER% --password-stdin
+                        docker compose -f %COMPOSE_FILES% push
+                    '''
                 }
             }
         }
