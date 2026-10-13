@@ -38,7 +38,7 @@ pipeline {
                 )]) {
                     bat '''
                         echo %DH_TOKEN% | docker login -u %DH_USER% --password-stdin
-                        docker compose -f %COMPOSE_FILES% push
+                        docker compose -f "docker-compose.yml" push
                     '''
                 }
             }
@@ -46,9 +46,9 @@ pipeline {
 
         stage('Deploy Containers') {
             steps {
-                bat 'docker compose -f "%COMPOSE_FILE%" pull'
-                bat 'docker compose -f "%COMPOSE_FILE%" up -d'
-                bat 'docker compose -f "%COMPOSE_FILE%" ps'
+                bat 'docker compose -f "docker-compose.yml" pull'
+                bat 'docker compose -f "docker-compose.yml" up -d'
+                bat 'docker compose -f "docker-compose.yml" ps'
             }
         }
     }
