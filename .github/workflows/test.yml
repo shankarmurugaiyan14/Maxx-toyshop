@@ -1,5 +1,5 @@
 
-name: Three Tier Application CI Pipeline
+name: Build and Deploy Maxx Toy Shop
 
 on:
   push:
@@ -10,13 +10,13 @@ on:
 permissions:
   contents: read
 
+env:
+  DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+  IMAGE_TAG: ${{ github.sha }}
+
 jobs:
   build-test-push:
     runs-on: ubuntu-latest
-
-    env:
-      DOCKER_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-      IMAGE_TAG: ${{ github.sha }}
 
     steps:
       - name: Checkout source code
@@ -27,8 +27,8 @@ jobs:
           docker --version
           docker compose version
 
-      - name: Validate Docker Compose
-        run: docker compose config -q
+      - name: Validate Compose configuration
+        run: docker compose -f docker-compose.yml config -q
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -36,39 +36,87 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build all three Docker images
-        run: docker compose build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Push images to Docker Hub
-        run: docker compose push
+      - name: Build and push database image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./database
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/maxx-toystore-database:${{ github.sha }}
+            ${{ vars.DOCKERHUB_USERNAME }}/maxx-toystore-database:latest
 
-  EC2-deployment:
-     needs: [build-test-push]  
-     runs-on: ubuntu-latest
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/maxx-toystore-backend:${{ github.sha }}
+            ${{ vars.DOCKERHUB_USERNAME }}/maxx-toystore-backend:latest
 
-     steps:
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/maxx-toystore-frontend:${{ github.sha }}
+            ${{ vars.DOCKERHUB_USERNAME }}/maxx-toystore-frontend:latest
+
+  deploy-ec2:
+    needs: build-test-push
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Checkout source code
         uses: actions/checkout@v4
 
       - name: Copy production Compose file to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-           host: ${{ secrets.EC2_HOST }}
-           username: ${{ secrets.EC2_USER }}
-           key: ${{ secrets.EC2_SSH_KEY }}
-           script: |
-             set -e
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.ec2.yml"
+          target: "/home/${{ secrets.EC2_USER }}/maxx-toystore"
 
-             sudo apt update -y
-             sudo apt install docker -y
-             echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ vars.DOCKERHUB_USERNAME }}" --password-stdin
-             docker network create toy-Network
-             docker pull maxx-toystore-frontend
-             docker pull maxx-toystore-backend
-             docekr pull maxx-toystore-database
-             docker run -d --name Maxx-database --network toy-network -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=maxx-toy-shop -p 3306:3306 maxx-toystore-database
-             docker run -d --name Maxx-backend --network toy-network -p 8080:8080  maxx-toystore-backend
-             docker run -d --name Maxx-frontend --network toy-network -p 80:80 maxx-toystore-frontend 
-             docker ps --filter "toy-network"
-             
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+          IMAGE_TAG: ${{ github.sha }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_PASSWORD,IMAGE_TAG,MYSQL_ROOT_PASSWORD
+          script: |
+            set -eu
 
+            mkdir -p "$HOME/maxx-toystore"
+            cd "$HOME/maxx-toystore"
+
+            if ! command -v docker >/dev/null 2>&1; then
+              sudo apt-get update
+              sudo apt-get install -y docker.io docker-compose-v2
+              sudo systemctl enable --now docker
+            fi
+
+            printf '%s' "$DOCKERHUB_PASSWORD" |
+              sudo docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+            umask 077
+            printf 'DOCKERHUB_USERNAME=%s\nIMAGE_TAG=%s\nMYSQL_ROOT_PASSWORD=%s\n' \
+              "$DOCKERHUB_USERNAME" "$IMAGE_TAG" "$MYSQL_ROOT_PASSWORD" > .env
+
+            sudo docker compose --env-file .env -f docker-compose.ec2.yml config -q
+            sudo docker compose --env-file .env -f docker-compose.ec2.yml pull
+            sudo docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
+            sudo docker image prune -f
+
+            sudo docker compose --env-file .env -f docker-compose.ec2.yml ps
