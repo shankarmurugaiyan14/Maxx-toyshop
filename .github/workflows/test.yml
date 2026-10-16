@@ -11,7 +11,6 @@ permissions:
   contents: read
 
 env:
-  DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -87,36 +86,51 @@ jobs:
         run: |
           set -eu
 
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
 
-          # Add the host key so SSH can run non-interactively.
-          # For stronger security, verify the fingerprint independently.
-          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+          echo "Checking EC2 host configuration..."
 
-      - name: Copy Compose file to EC2
+          if [ -z "$EC2_HOST" ]; then
+            echo "EC2_HOST secret is empty."
+            exit 1
+          fi
+
+          # For production security, verify this host fingerprint
+          # against a trusted source before accepting it.
+          ssh-keyscan -H "$EC2_HOST" >> "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Diagnose SSH and copy Compose file
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
           set -eu
 
-          test -f docker-compose.ec2.yml
+          if [ -z "$EC2_USER" ]; then
+            echo "EC2_USER secret is empty."
+            exit 1
+          fi
 
-          echo "Testing SSH connectivity..."
+          if [ ! -f docker-compose.ec2.yml ]; then
+            echo "docker-compose.ec2.yml was not found in the repository root."
+            exit 1
+          fi
 
-          ssh -v \
+          echo "Testing SSH connection to EC2..."
+
+          ssh -vv \
             -o BatchMode=yes \
-            -o ConnectTimeout=15 \
+            -o ConnectTimeout=20 \
             "$EC2_USER@$EC2_HOST" \
-            'mkdir -p ~/maxx-toystore' 2>&1
+            'mkdir -p ~/maxx-toystore && echo SSH_CONNECTED' 2>&1
 
-          echo "Copying Compose file..."
+          echo "Copying Docker Compose file..."
 
           scp \
             -o BatchMode=yes \
-            -o ConnectTimeout=15 \
+            -o ConnectTimeout=20 \
             docker-compose.ec2.yml \
             "$EC2_USER@$EC2_HOST:~/maxx-toystore/docker-compose.ec2.yml"
 
@@ -146,36 +160,40 @@ jobs:
             fi
 
             if ! sudo docker compose version >/dev/null 2>&1; then
-              echo "Docker Compose plugin is missing."
+              echo "Docker Compose is not installed correctly."
               exit 1
             fi
 
-            # Write environment variables without printing secrets.
+            # Create a protected environment file.
             umask 077
+
             printf 'DOCKERHUB_USERNAME=%s\nIMAGE_TAG=%s\nMYSQL_ROOT_PASSWORD=%s\n' \
               "$DOCKERHUB_USERNAME" \
               "$IMAGE_TAG" \
               "$MYSQL_ROOT_PASSWORD" > .env
 
-            # Authenticate using the same Docker account as the build job.
+            # Authenticate Docker on EC2.
             printf '%s' "$DOCKERHUB_PASSWORD" |
               sudo docker login \
                 --username "$DOCKERHUB_USERNAME" \
                 --password-stdin
 
-            # Validate, pull the exact image versions, and deploy.
+            # Validate configuration before changing running containers.
             sudo docker compose \
               --env-file .env \
               -f docker-compose.ec2.yml config -q
 
+            # Pull the exact images built by this workflow.
             sudo docker compose \
               --env-file .env \
               -f docker-compose.ec2.yml pull
 
+            # Start or update the application.
             sudo docker compose \
               --env-file .env \
               -f docker-compose.ec2.yml up -d --remove-orphans
 
+            echo "Container status:"
             sudo docker compose \
               --env-file .env \
               -f docker-compose.ec2.yml ps
