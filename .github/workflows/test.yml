@@ -37,7 +37,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build all three Docker images
-        run: docker compose Build
+        run: docker compose build
 
       - name: Push images to Docker Hub
         run: docker compose push
