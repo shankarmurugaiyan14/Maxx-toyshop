@@ -16,6 +16,7 @@ env:
 
 jobs:
   build-test-push:
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +28,7 @@ jobs:
           docker --version
           docker compose version
 
-      - name: Validate Compose configuration
+      - name: Validate Docker Compose
         run: docker compose -f docker-compose.yml config -q
 
       - name: Login to Docker Hub
@@ -67,6 +68,7 @@ jobs:
             ${{ vars.DOCKERHUB_USERNAME }}/maxx-toystore-frontend:latest
 
   deploy-ec2:
+    name: Deploy to EC2
     needs: build-test-push
     runs-on: ubuntu-latest
 
@@ -74,13 +76,35 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Copy production Compose file to EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Configure SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          set -eu
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Copy Compose file to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          set -eu
+
+          test -f docker-compose.ec2.yml
+
+          ssh "$EC2_USER@$EC2_HOST" \
+            'mkdir -p ~/maxx-toystore'
+
+          scp docker-compose.ec2.yml \
+            "$EC2_USER@$EC2_HOST:~/maxx-toystore/docker-compose.ec2.yml"
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.2.0
@@ -94,10 +118,10 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: DOCKERHUB_USERNAME,DOCKERHUB_PASSWORD,IMAGE_TAG,MYSQL_ROOT_PASSWORD
+          script_stop: true
           script: |
             set -eu
 
-            mkdir -p "$HOME/maxx-toystore"
             cd "$HOME/maxx-toystore"
 
             if ! command -v docker >/dev/null 2>&1; then
@@ -106,16 +130,42 @@ jobs:
               sudo systemctl enable --now docker
             fi
 
-            printf '%s' "$DOCKERHUB_PASSWORD" |
-              sudo docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            if ! sudo docker compose version >/dev/null 2>&1; then
+              echo "Docker Compose plugin is missing."
+              exit 1
+            fi
 
             umask 077
             printf 'DOCKERHUB_USERNAME=%s\nIMAGE_TAG=%s\nMYSQL_ROOT_PASSWORD=%s\n' \
-              "$DOCKERHUB_USERNAME" "$IMAGE_TAG" "$MYSQL_ROOT_PASSWORD" > .env
+              "$DOCKERHUB_USERNAME" \
+              "$IMAGE_TAG" \
+              "$MYSQL_ROOT_PASSWORD" > .env
 
-            sudo docker compose --env-file .env -f docker-compose.ec2.yml config -q
-            sudo docker compose --env-file .env -f docker-compose.ec2.yml pull
-            sudo docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
-            sudo docker image prune -f
+            printf '%s' "$DOCKERHUB_PASSWORD" |
+              sudo docker login \
+                --username "$DOCKERHUB_USERNAME" \
+                --password-stdin
 
-            sudo docker compose --env-file .env -f docker-compose.ec2.yml ps
+            sudo docker compose \
+              --env-file .env \
+              -f docker-compose.ec2.yml config -q
+
+            sudo docker compose \
+              --env-file .env \
+              -f docker-compose.ec2.yml pull
+
+            sudo docker compose \
+              --env-file .env \
+              -f docker-compose.ec2.yml up -d --remove-orphans
+
+            sudo docker compose \
+              --env-file .env \
+              -f docker-compose.ec2.yml ps
+
+            sudo docker logout
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "Deployment completed."
+          echo "Image tag: $IMAGE_TAG"
