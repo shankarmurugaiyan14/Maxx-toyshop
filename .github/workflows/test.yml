@@ -44,12 +44,15 @@ jobs:
 
   EC2-deployment:
     needs: [build-test-push]  
-    runs-on: ubuntu-latest
+     runs-on: ubuntu-latest
 
-    steps:
-       - name: SSH into Ec2 and deployment
-         uses: appleboy/ssh-actions@v1.0.3
-         with:
+     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Copy production Compose file to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
            host: ${{ secrets.EC2_HOST }}
            username: ${{ secrets.EC2_USER }}
            key: ${{ secrets.EC2_SSH_KEY }}
