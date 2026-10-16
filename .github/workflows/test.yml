@@ -37,22 +37,35 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build all three Docker images
-        run: docker compose build
-
-      - name: Start application
-        run: docker compose up -d
-
-      - name: Check container status
-        run: |
-          docker ps
+        run: docker compose Build
 
       - name: Push images to Docker Hub
         run: docker compose push
 
-      - name: Display logs on failure
-        if: failure()
-        run: docker compose logs --no-color
+  EC2-deployment:
+    needs: [build-test-push]  
+    runs-on: ubuntu:latest
 
-      - name: Stop application and cleanup
-        if: always()
-        run: docker compose down --remove-orphans
+    steps:
+       - name: SSH into Ec2 and deployment
+         uses: appleboy/ssh-actions@v1.0.3
+         with:
+           host: ${{ secrets.EC2_HOST }}
+           username: ${{ secrets.EC2_USER }}
+           key: ${{ secrets.EC2_SSH_KEY }}
+           script: |
+             set -e
+
+             sudo apt update -y
+             sudo apt install docker -y
+             echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ vars.DOCKERHUB_USERNAME }}" --password-stdin
+             docker network create toy-Network
+             docker pull maxx-toystore-frontend
+             docker pull maxx-toystore-backend
+             docekr pull maxx-toystore-database
+             docker run -d --name Maxx-database --network toy-network -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=maxx-toy-shop -p 3306:3306 maxx-toystore-database
+             docker run -d --name Maxx-backend --network toy-network -p 8080:8080  maxx-toystore-backend
+             docker run -d --name Maxx-frontend --network toy-network -p 80:80 maxx-toystore-frontend 
+             docker ps --filter "toy-network"
+             
+
