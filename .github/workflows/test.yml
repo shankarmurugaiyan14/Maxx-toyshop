@@ -43,7 +43,7 @@ jobs:
         run: docker compose push
 
   EC2-deployment:
-    needs: [build-test-push]  
+     needs: [build-test-push]  
      runs-on: ubuntu-latest
 
      steps:
