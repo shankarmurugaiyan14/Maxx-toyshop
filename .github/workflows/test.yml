@@ -44,7 +44,7 @@ jobs:
 
   EC2-deployment:
     needs: [build-test-push]  
-    runs-on: ubuntu:latest
+    runs-on: ubuntu-latest
 
     steps:
        - name: SSH into Ec2 and deployment
